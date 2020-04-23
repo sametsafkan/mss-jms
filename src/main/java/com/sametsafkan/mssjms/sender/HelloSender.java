@@ -42,19 +42,17 @@ public class HelloSender {
                 .message("Hello World")
                 .id(UUID.randomUUID())
                 .build();
-        Message returnedMessage = jmsTemplate.sendAndReceive(JmsConfig.SEND_AND_RECEIVE_QUEUE, new MessageCreator() {
-            @Override
-            public Message createMessage(Session session) throws JMSException {
-                TextMessage helloMessage = null;
-                try {
-                    helloMessage = session.createTextMessage(objectMapper.writeValueAsString(message));
-                    helloMessage.setStringProperty("_type", "com.sametsafkan.mssjms.model.HelloWorldMessage");
-                    return helloMessage;
-                } catch (JsonProcessingException e) {
-                    throw new JMSException(e.getMessage());
-                }
-            }
-        });
-        log.info(returnedMessage.getBody(String.class).toString());
+        Message returnedMessage = jmsTemplate.sendAndReceive(JmsConfig.SEND_AND_RECEIVE_QUEUE, session -> createMessage(message, session));
+        log.info(returnedMessage.getBody(String.class));
+    }
+
+    private Message createMessage(HelloWorldMessage message, Session session) throws JMSException {
+        try {
+            TextMessage helloMessage = session.createTextMessage(objectMapper.writeValueAsString(message));
+            helloMessage.setStringProperty("_type", "com.sametsafkan.mssjms.model.HelloWorldMessage");
+            return helloMessage;
+        } catch (JsonProcessingException e) {
+            throw new JMSException(e.getMessage());
+        }
     }
 }
